@@ -30,7 +30,7 @@ def network_portrayal(G):
 
     return portrayal
 
-number_of_agents_slider = mesa.visualization.NumberInput('Number of Agents', 40, description = "Number of agents in the simulation.")
+number_of_agents_slider = mesa.visualization.NumberInput('Number of Agents', 200, description = "Number of agents in the simulation.")
 chance_of_infection_slider = mesa.visualization.NumberInput('Implicit Chance of Infection (0 < x < 100)', 30, description="Chance of getting infected per interaction for an agent that does not have any factors that increase their chance of infection.")
 
 age_risk = mesa.visualization.NumberInput('At-Risk due to Age (0 < x < 100)', 30,description="Proportion of population that is at-risk due to their age.")
@@ -45,6 +45,9 @@ m_value_slider = mesa.visualization.NumberInput('M Value (0 < x < number of node
 num_recoveries_slider = mesa.visualization.NumberInput('Number of Recoveries', 3, description="Number of recoveries an agent has before they are immune.")
 num_steps_to_recovery_slider = mesa.visualization.NumberInput('Number of Steps till Recovery', 10, description="Number of steps an agent has to take before they automatically recover")
 
+vaccination_rate = mesa.visualization.NumberInput("Vaccination Rate (0 < x < 100)", 30, description = "Probability of an agent already being vaccinated/getting vaccinated after recovering from disease.")
+vaccination_efficacy = mesa.visualization.NumberInput("Vaccination Efficacy (0 < x < 100)", 75, description="Probability of vaccine preventing the disease.")
+
 grid = mesa.visualization.NetworkModule(network_portrayal, canvas_height=1000, canvas_width=864)
 chart = mesa.visualization.ChartModule([{'Label': 'Prevalence', 'Color': 'Black'}], data_collector_name="datacollector")
 chart2 = mesa.visualization.ChartModule([{'Label': 'Incidence', 'Color': 'Blue'}], data_collector_name="datacollector")
@@ -56,10 +59,11 @@ combined_chart = mesa.visualization.ChartModule(
     ],
     data_collector_name="datacollector"
 )
+chart3 = mesa.visualization.ChartModule([{'Label': 'Vaccinations', 'Color': 'Green'}])
 
 server = mesa.visualization.ModularServer(
     NetworkModel,
-    [grid, chart, chart2, combined_chart],
+    [grid, chart, chart2, combined_chart, chart3],
     "epicurves.io - Network Simulation",
     {'N': number_of_agents_slider,
      'chance_of_infection': chance_of_infection_slider, 'age_risk_proportion': age_risk,
@@ -69,7 +73,9 @@ server = mesa.visualization.ModularServer(
      'p_value': p_value_slider,
      'm_value': m_value_slider,
      'num_recoveries_for_immune': num_recoveries_slider,
-     'num_steps': num_steps_to_recovery_slider}
+     'num_steps': num_steps_to_recovery_slider,
+     'vaccination_rate': vaccination_rate,
+     'vaccination_efficacy': vaccination_efficacy}
 )
 
 server.port = 8660

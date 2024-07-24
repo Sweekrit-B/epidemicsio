@@ -19,6 +19,8 @@ def compute_infected(model):
     return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)
 def compute_susceptible(model):
     return sum(1 for agent in model.schedule.agents if agent.wealth == 0 and agent.num_recoveries < model.num_recoveries_for_immune)
+def compute_vaccinated(model):
+    return model.vaccinations
 
 class NetworkAgent(mesa.Agent):
     def __init__(self, unique_id, model):
@@ -34,11 +36,15 @@ class NetworkAgent(mesa.Agent):
         self.increase_genetic_risk = 1
         self.increase_lifestyle_risk = 1
 
+        self.vaccinated = 0
+
         id_list = []
         id_list.append(unique_id)
         for x in id_list:
             if x < 1:
                 self.wealth = 1
+            if x < self.model.vaccination_rate * self.model.num_nodes:
+                self.vaccinated = self.model.vaccination_efficacy
             if random.random() < self.model.age_risk_proportion/100:
                 self.increase_age_risk = 1.2
             if random.random() < self.model.genetic_risk_proportion/100:
@@ -59,17 +65,17 @@ class NetworkAgent(mesa.Agent):
             for a in susceptible_neighbors:
                 if a.wealth == 0 and a.num_recoveries < a.model.num_recoveries_for_immune:
                     if a.random.random() < a.model.chance_of_infection/100 * a.increase_age_risk * a.increase_genetic_risk * a.increase_lifestyle_risk:
-                        a.recovered = 0
-                        a.wealth = 1
-                        self.model.new_cases += 1
-                        break
+                        if random.random() > a.vaccinated:
+                            a.recovered = 0
+                            a.wealth = 1
+                            self.model.new_cases += 1
+                            break
 
     def step(self):
         self.move()
         if self.wealth == 1:
             self.give_money()
             self.steps += 1
-            print(f"Agent {self.unique_id} has stepped {self.steps} times.")
         elif self.wealth == 0:
             self.steps = 0
         if self.steps == self.model.num_steps:
@@ -77,15 +83,17 @@ class NetworkAgent(mesa.Agent):
             self.wealth = 0
             self.recovered = 1
             self.num_recoveries += 1
-            print(f"Agent {self.unique_id} has stepped twice.")
-            print(f"Agent {self.unique_id} has {self.num_recoveries}")
+            if random.random() <= self.model.vaccination_rate/100:
+                self.vaccinated = self.model.vaccination_efficacy
+                self.model.vaccinations += 1
 
 
 class NetworkModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, N, chance_of_infection, graph_type, m_value, p_value, num_recoveries_for_immune, num_steps,  age_risk_proportion, genetic_risk_proportion, lifestyle_risk_proportion):
+    def __init__(self, N, chance_of_infection, graph_type, m_value, p_value, num_recoveries_for_immune, num_steps,  age_risk_proportion, genetic_risk_proportion, lifestyle_risk_proportion, vaccination_rate, vaccination_efficacy):
         super().__init__()
+        
         self.num_nodes = N
         self.num_steps = num_steps
         self.num_recoveries_for_immune = num_recoveries_for_immune
@@ -93,6 +101,11 @@ class NetworkModel(mesa.Model):
         self.age_risk_proportion = age_risk_proportion
         self.genetic_risk_proportion = genetic_risk_proportion
         self.lifestyle_risk_proportion = lifestyle_risk_proportion
+        self.vaccination_rate = vaccination_rate
+        self.vaccination_efficacy = vaccination_efficacy/100
+        
+        self.vaccinations = 0
+
         self.schedule = mesa.time.RandomActivation(self)
         #Here, need to generate a random graph, and then make a grid on it
         if graph_type == 'Barabasi Albert':
@@ -124,7 +137,8 @@ class NetworkModel(mesa.Model):
          "Incidence": compute_incidence,
          "Susceptible": compute_susceptible,
          "Infected": compute_infected,
-         "Recovered": compute_recovered},
+         "Recovered": compute_recovered,
+         "Vaccinations": compute_vaccinated},
         agent_reporters={"Wealth": "wealth"})
 
     def step(self):
