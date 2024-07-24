@@ -7,17 +7,30 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 matplotlib.use('TkAgg')
+
+def compute_prevalence(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)/model.num_nodes
+def compute_incidence(model):
+    return model.new_cases / model.num_nodes
+def compute_recovered(model):
+    return sum(1 for agent in model.schedule.agents if agent.recovered == 1)
+def compute_infected(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)
+def compute_susceptible(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 0 and agent.recovered == 0)
+def compute_deaths(model):
+    return model.deaths
+
 def compute_prevalence(model):
     agent_wealths = [agent.wealth for agent in model.schedule.agents]
-    l = len(agent_wealths)
     c = sum(agent_wealths)
-    return c/l
+    return c/model.num_agents
 
 def compute_incidence(model):
     return model.new_cases / model.num_agents
+
 def compute_recovered(model):
     agent_recovered = [agent.recovered for agent in model.schedule.agents]
-    l = len(agent_recovered)
     r = sum(agent_recovered)
     return r
 
@@ -31,7 +44,7 @@ def compute_susceptible(model):
     agent_recovered = [agent.recovered for agent in model.schedule.agents]
     i = sum(agent_wealths)
     r = sum(agent_recovered)
-    return len(agent_wealths)-i-r
+    return model.num_agents-i-r
 
 class MoneyAgent(mesa.Agent):
     def __init__(self, unique_id, model):
@@ -43,13 +56,22 @@ class MoneyAgent(mesa.Agent):
         self.wealth = 0
         self.steps = 0
         self.recovered = 0
+
+        self.increase_age_risk = 1
+        self.increase_genetic_risk = 1
+        self.increase_lifestyle_risk = 1
+
+        self.death_risk = self.model.death_risk * self.increase_age_risk * self.increase_genetic_risk * self.increase_lifestyle_risk
+
         id_list = []
         id_list.append(unique_id)
-        '''for x in id_list:
-            if x < 1:
-                self.wealth = 1
-            else:
-                self.wealth = 0'''
+        for x in id_list:
+            if random.random() < self.model.age_risk/100:
+                self.increase_age_risk = 1.2
+            if random.random() < self.model.genetic_risk/100:
+                self.increase_genetic_risk = 1.2
+            if random.random() < self.model.lifestyle_risk/100:
+                self.increase_lifestyle_risk = 1.2
 
     def move(self):
         possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
@@ -61,8 +83,7 @@ class MoneyAgent(mesa.Agent):
         cellmates = self.model.grid.get_neighbors(self.pos, include_center=True, moore=True)
         if len(cellmates) > 1:
             other = self.random.choice(cellmates)
-            a = random.randrange(1, 10)
-            if self.wealth == 1 and other.wealth < 1 and other.recovered != 1 and a <= self.model.chance_of_infection:
+            if self.wealth == 1 and other.wealth < 1 and other.recovered != 1 and random.random() <= self.model.chance_of_infection/100 * other.increase_age_risk * other.increase_genetic_risk * other.increase_lifestyle_risk:
                 other.wealth += 1
                 self.model.new_cases += 1
 
@@ -91,11 +112,13 @@ class MoneyAgent(mesa.Agent):
             self.steps += 1
         elif self.wealth < 1:
             self.steps = 0
-        '''if self.steps == 14:
-            self.wealth = 0
-            self.recovered = 1
-            self.model.new_recoveries += 1
-            '''
+        if self.steps >= self.model.steps_to_death:
+            print(f"Agent {self.unique_id} at risk of death")
+            if random.random() < self.death_risk/100:
+                print(f"Agent {self.unique_id} died.")
+                self.model.schedule.remove(self)
+                self.model.grid.remove_agent(self)
+                self.model.deaths += 1
         if self.in_recovery_zone() and self.wealth == 1:
             self.wealth = 0
             self.recovered = 1
@@ -108,11 +131,17 @@ class MoneyAgent(mesa.Agent):
 class MoneyModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, N, recovery_size, infectious_size, chance_of_infection, width, height):
+    def __init__(self, N, recovery_size, infectious_size, chance_of_infection, width, height, age_risk, genetic_risk, lifestyle_risk, death_risk, steps_to_death):
         super().__init__()
         self.num_agents = N
+        self.age_risk = age_risk
+        self.genetic_risk = genetic_risk
+        self.lifestyle_risk = lifestyle_risk
         self.chance_of_infection = chance_of_infection
         self.recovery_size = recovery_size
+        self.death_risk = death_risk
+        self.steps_to_death = steps_to_death
+
         self.schedule = mesa.time.RandomActivation(self)
         self.grid = mesa.space.MultiGrid(width, height, True)
         self.recovery_layer = mesa.space.PropertyLayer(
@@ -141,6 +170,8 @@ class MoneyModel(mesa.Model):
 
         self.new_cases = 0
         self.new_recoveries = 0
+        self.deaths = 0
+
         # Create agents
         for i in range(self.num_agents):
             a = MoneyAgent(i, self)
@@ -155,11 +186,11 @@ class MoneyModel(mesa.Model):
             a.x = x
             a.y = y
 
-        self.datacollector = mesa.DataCollector(model_reporters={"Prevalence": compute_prevalence,
+        self.datacollector = mesa.DataCollector(model_reporters={"Prevalence":compute_prevalence,
                                                                  "Incidence": compute_incidence,
                                                                  "Susceptible": compute_susceptible,
                                                                  "Infected": compute_infected,
-                                                                 "Recovered": compute_recovered},
+                                                                 "Recovered": compute_recovered, "Deaths": compute_deaths},
                                                 agent_reporters={"Wealth": "wealth"})
 
     def step(self):
@@ -170,8 +201,8 @@ class MoneyModel(mesa.Model):
         susceptible = compute_susceptible(self)
         infected = compute_infected(self)
         recovered = compute_recovered(self)
-        print(f"Step {self.schedule.steps}: Prevalence = {prevalence}, Incidence = {incidence}")
-        print(f"Susceptible = {susceptible}, Infected = {infected}, Recovered = {recovered}")
+        #print(f"Step {self.schedule.steps}: Prevalence = {prevalence}, Incidence = {incidence}")
+        #print(f"Susceptible = {susceptible}, Infected = {infected}, Recovered = {recovered}")
 
         self.new_cases = 0
         self.schedule.step()
@@ -180,6 +211,7 @@ class MoneyModel(mesa.Model):
             print("All agents have recovered. Simulation finished.")
             self.running = False
 
-'''model = MoneyModel(10, 2, 4, 4)
-for i in range(10):
-    model.step()'''
+'''model = MoneyModel(10, 2, 4, 4, 20, 20)
+for i in range(100):
+    model.step()
+    model_state = model.datacollector.get_model_vars_dataframe()'''
