@@ -41,7 +41,7 @@ chart3 = mesa.visualization.ChartModule([{'Label': 'Deaths', 'Color': 'Green'}])
 server = mesa.visualization.ModularServer(
     MoneyModel,
     [grid, chart, chart2, combined_chart, chart3],
-    "epicurves.io - Traditional Simulation",
+    "epidemics.io - Traditional Simulation",
     {'N': number_of_agents_slider, 
      'chance_of_infection': chance_of_infection_slider,
      'death_risk': death_risk,

@@ -57,17 +57,24 @@ class MoneyAgent(mesa.Agent):
         self.steps = 0
         self.recovered = 0
 
+        #Age risk refers to those over the age of 65
         self.increase_age_risk = 1
+        self.increase_age_risk_death = 1
+
         self.increase_genetic_risk = 1
         self.increase_lifestyle_risk = 1
 
-        self.death_risk = self.model.death_risk * self.increase_age_risk * self.increase_genetic_risk * self.increase_lifestyle_risk
+        self.death_risk = self.model.death_risk * self.increase_age_risk_death * self.increase_genetic_risk * self.increase_lifestyle_risk
 
         id_list = []
         id_list.append(unique_id)
         for x in id_list:
             if random.random() < self.model.age_risk/100:
                 self.increase_age_risk = 1.2
+
+                #It is apparent that the chance of death increases with age faster than the chance of infection.
+
+                self.increase_age_risk_death = 1.5
             if random.random() < self.model.genetic_risk/100:
                 self.increase_genetic_risk = 1.2
             if random.random() < self.model.lifestyle_risk/100:
@@ -133,6 +140,7 @@ class MoneyModel(mesa.Model):
 
     def __init__(self, N, recovery_size, infectious_size, chance_of_infection, width, height, age_risk, genetic_risk, lifestyle_risk, death_risk, steps_to_death):
         super().__init__()
+        
         self.num_agents = N
         self.age_risk = age_risk
         self.genetic_risk = genetic_risk

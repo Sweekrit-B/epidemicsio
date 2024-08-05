@@ -6,8 +6,18 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib
 import networkx as nx
+import datetime
+import os
 
 matplotlib.use('TkAgg')
+
+#https://pubmed.ncbi.nlm.nih.gov/11130187/
+#https://www.sciencedirect.com/science/article/pii/S128645791000211X?via%3Dihub
+
+output_path = "C:/Users/sweek/Documents/buildspace/output_data"
+
+def compute_total_infections(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)
 
 def compute_prevalence(model):
     return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)/model.num_nodes
@@ -22,6 +32,23 @@ def compute_susceptible(model):
 def compute_vaccinated(model):
     return model.vaccinations
 
+def compute_prevalence_age(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_age_risk != 1)/sum(1 for agent in model.schedule.agents if agent.increase_age_risk != 1)
+def compute_prevalence_genetic(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_genetic_risk != 1)/sum(1 for agent in model.schedule.agents if agent.increase_genetic_risk != 1)
+def compute_prevalence_lifestyle(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_lifestyle_risk != 1)/sum(1 for agent in model.schedule.agents if agent.increase_lifestyle_risk != 1)
+
+def compute_prevalence_tobacco(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_tobacco_use != 1)/sum(1 for agent in model.schedule.agents if agent.increase_tobacco_use != 1)
+def compute_prevalence_diet(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_unhealthy_diet != 1)/sum(1 for agent in model.schedule.agents if agent.increase_unhealthy_diet != 1)
+def compute_prevalence_activity(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_physical_activity != 1)/sum(1 for agent in model.schedule.agents if agent.increase_physical_activity != 1)
+def compute_prevalence_alcohol(model):
+    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_alcohol_use != 1)/sum(1 for agent in model.schedule.agents if agent.increase_alcohol_use != 1)
+
+
 class NetworkAgent(mesa.Agent):
     def __init__(self, unique_id, model):
         # pass the parameters to the parent class
@@ -34,7 +61,15 @@ class NetworkAgent(mesa.Agent):
 
         self.increase_age_risk = 1
         self.increase_genetic_risk = 1
+        
+        self.increase_tobacco_use = 1
+        self.increase_unhealthy_diet = 1
+        self.increase_physical_activity = 1
+        self.increase_alcohol_use = 1
+
         self.increase_lifestyle_risk = 1
+
+        self.chance_of_infection = self.model.chance_of_infection
 
         self.vaccinated = 0
 
@@ -47,10 +82,22 @@ class NetworkAgent(mesa.Agent):
                 self.vaccinated = self.model.vaccination_efficacy
             if random.random() < self.model.age_risk_proportion/100:
                 self.increase_age_risk = 1.2
+                
+                #This, strictly speaking, defines a person's INNATE immunity, which decreases with age. Aging effects a person's ability to produce plasmacytoid dendritic cells (pDCs), which are key cellular responders of viral infection, producing type I interferon
+
+                #aging impairs pDCs ability to produce type I IFNs
+
             if random.random() < self.model.genetic_risk_proportion/100:
                 self.increase_genetic_risk = 1.2
-            if random.random() < self.model.lifestyle_risk_proportion/100:
-                self.increase_lifestyle_risk = 1.2
+            if random.random() < self.model.tobacco_risk_proportion/100:
+                self.increase_tobacco_use = 1.2
+            if random.random() < self.model.unhealthy_diet_proportion/100:
+                self.increase_unhealthy_diet = 1.2
+            if random.random() < self.model.physical_activity_proportion/100:
+                self.increase_physical_activity = 1.2
+            if random.random() < self.model.alcohol_use_proportion/100:
+                self.increase_alcohol_use = 1.2
+            self.increase_lifestyle_risk = self.increase_tobacco_use * self.increase_unhealthy_diet * self.increase_physical_activity * self.increase_alcohol_use * self.model.income_multiplier
 
     def move(self):
         possible_steps = self.model.grid.get_neighborhood(self.pos, include_center=False, radius=2)
@@ -64,7 +111,7 @@ class NetworkAgent(mesa.Agent):
         if susceptible_neighbors:
             for a in susceptible_neighbors:
                 if a.wealth == 0 and a.num_recoveries < a.model.num_recoveries_for_immune:
-                    if a.random.random() < a.model.chance_of_infection/100 * a.increase_age_risk * a.increase_genetic_risk * a.increase_lifestyle_risk:
+                    if a.random.random() < a.chance_of_infection/100 * a.increase_age_risk * a.increase_genetic_risk * a.increase_lifestyle_risk:
                         if random.random() > a.vaccinated:
                             a.recovered = 0
                             a.wealth = 1
@@ -83,25 +130,63 @@ class NetworkAgent(mesa.Agent):
             self.wealth = 0
             self.recovered = 1
             self.num_recoveries += 1
+
+            #This defines a person's ADAPTIVE immunity, which decreases with age. Aging effects a person's T cells, which has a reduced ability to form functional immunological synapses compared to younger T cells.
+
+            #As a person RECOVERS from disease, the chance of getting infected by disease gets reduced by 10% for those who have age-risk, but by 25% for those who don't have that risk.
+ 
+            if self.increase_age_risk == 1.2:
+                self.chance_of_infection *= 0.75
+            elif self.increase_age_risk == 1:
+                self.increase_age_risk *= 0.5
+
+            #Vaccination code
+            #Efficacy of vaccines - 30-40% for ages 65+ and 70-90% for ages <65
             if random.random() <= self.model.vaccination_rate/100:
-                self.vaccinated = self.model.vaccination_efficacy
+                #Age factors
+                if self.increase_age_risk == 1.2:
+                    self.vaccinated = 0.35*self.model.vaccination_efficacy
+                elif self.increase_age_risk == 1:
+                    self.vaccinated = 0.80*self.model.vaccination_efficacy
                 self.model.vaccinations += 1
 
 
 class NetworkModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, N, chance_of_infection, graph_type, m_value, p_value, num_recoveries_for_immune, num_steps,  age_risk_proportion, genetic_risk_proportion, lifestyle_risk_proportion, vaccination_rate, vaccination_efficacy):
+    def __init__(self, N, chance_of_infection, graph_type, m_value, p_value, num_recoveries_for_immune, num_steps,  age_risk_proportion, genetic_risk_proportion, tobacco_risk_proportion, unhealthy_diet_proportion, physical_activity_proportion, alcohol_use_proportion, income_multiplier, vaccination_rate, vaccination_efficacy):
+
         super().__init__()
         
         self.num_nodes = N
         self.num_steps = num_steps
+
+        self.results_df = pd.DataFrame(columns=[
+            "Step", "Total Infections", "Prevalence", "Incidence", "Susceptible", "Infected", "Recovered", 
+            "Vaccinations", "Prevalence - Age Risk", "Prevalence - Genetic Risk", 
+            "Prevalence - Tobacco", "Prevalence - Diet", "Prevalence - Physical Activity", 
+            "Prevalence - Alcohol Use", "Prevalence - Lifestyle Risk", "Type"
+        ])
+
+        #Defines the number of recoveries that are required for a person to become IMMUNE from a disease. This is to reflect the evolution of diseases, and different strains that may arise.
         self.num_recoveries_for_immune = num_recoveries_for_immune
+
+        #The IMPLICIT chance of infection of getting diseases. This value chances depending on age, genetic, and lifestyle factors as defined above.
         self.chance_of_infection = chance_of_infection
+
         self.age_risk_proportion = age_risk_proportion
         self.genetic_risk_proportion = genetic_risk_proportion
-        self.lifestyle_risk_proportion = lifestyle_risk_proportion
+        self.tobacco_risk_proportion = tobacco_risk_proportion
+        self.unhealthy_diet_proportion = unhealthy_diet_proportion
+        self.physical_activity_proportion = physical_activity_proportion
+        self.alcohol_use_proportion = alcohol_use_proportion
+
+        self.income_multiplier = income_multiplier
+        
+        #Vaccination rate describes the likelihood of agents getting the vaccine. This is a SOCIAL factor, almost as the acceptance of vaccination in the community.
         self.vaccination_rate = vaccination_rate
+
+        #Vaccination efficacy is the vaccine's ability to block disease under IDEAL conditions. This value changes to become the EFFECTIVENESS of the vaccine when we deal with the agent class
         self.vaccination_efficacy = vaccination_efficacy/100
         
         self.vaccinations = 0
@@ -133,24 +218,61 @@ class NetworkModel(mesa.Model):
             # Add the agent to a node
             self.grid.place_agent(a, node)
 
-        self.datacollector = mesa.DataCollector(model_reporters={"Prevalence": compute_prevalence,
+        self.datacollector = mesa.DataCollector(model_reporters={
+         "Total Infections": compute_total_infections,
+         "Prevalence": compute_prevalence,
          "Incidence": compute_incidence,
          "Susceptible": compute_susceptible,
          "Infected": compute_infected,
          "Recovered": compute_recovered,
-         "Vaccinations": compute_vaccinated},
+         "Vaccinations": compute_vaccinated,
+         "Prevalence - Age Risk": compute_prevalence_age,
+         "Prevalence - Genetic Risk": compute_prevalence_genetic,
+         "Prevalence - Tobacco": compute_prevalence_tobacco,
+         "Prevalence - Diet": compute_prevalence_diet,
+         "Prevalence - Physical Activity": compute_prevalence_activity,
+         "Prevalence - Alcohol Use": compute_prevalence_alcohol,
+         "Prevalence - Lifestyle Risk": compute_prevalence_lifestyle},
         agent_reporters={"Wealth": "wealth"})
 
     def step(self):
         self.datacollector.collect(self)
 
+        total_infections = compute_total_infections(self)
         prevalence = compute_prevalence(self)
         incidence = compute_incidence(self)
         susceptible = compute_susceptible(self)
         infected = compute_infected(self)
         recovered = compute_recovered(self)
-        print(f"Step {self.schedule.steps}: Prevalence = {prevalence}, Incidence = {incidence}")
-        print(f"Susceptible = {susceptible}, Infected = {infected}, Recovered = {recovered}")
+        vaccinations = compute_vaccinated(self)
+        prevalence_age_risk = compute_prevalence_age(self)
+        prevalence_genetic_risk = compute_prevalence_genetic(self)
+        prevalence_tobacco_risk = compute_prevalence_tobacco(self)
+        prevalence_diet_risk = compute_prevalence_diet(self)
+        prevalence_physical_activity_risk = compute_prevalence_activity(self)
+        prevalence_alcohol_risk = compute_prevalence_alcohol(self)
+        prevalence_lifestyle_risk = compute_prevalence_lifestyle(self)
+
+        new_row = {
+            "Step": self.schedule.steps,
+            "Total Infections": total_infections,
+            "Prevalence": prevalence,
+            "Incidence": incidence,
+            "Susceptible": susceptible,
+            "Infected": infected,
+            "Recovered": recovered,
+            "Vaccinations": vaccinations,
+            "Prevalence - Age Risk": prevalence_age_risk,
+            "Prevalence - Genetic Risk": prevalence_genetic_risk,
+            "Prevalence - Tobacco": prevalence_tobacco_risk,
+            "Prevalence - Diet": prevalence_diet_risk,
+            "Prevalence - Physical Activity": prevalence_physical_activity_risk,
+            "Prevalence - Alcohol Use": prevalence_alcohol_risk,
+            "Prevalence - Lifestyle Risk": prevalence_lifestyle_risk,
+            "Type": "propogated"
+        }
+    
+        self.results_df = self.results_df._append(new_row, ignore_index=True)
 
         self.new_cases = 0
         self.schedule.step()
@@ -158,6 +280,13 @@ class NetworkModel(mesa.Model):
         if self.schedule.steps != 1 and prevalence == 0.0:
             print("All agents have recovered. Simulation finished.")
             self.running = False
+            ct = str(datetime.datetime.now())
+            ct = ct.replace(':', '-')
+            ct = ct.replace(' ', '--')
+            filename = f'{ct}_network_model_run.csv'
+            filepath = os.path.join(output_path, filename)
+            self.results_df.to_csv(filepath, index=False)
+            print("Saved!")
 
 """model = NetworkModel(10, 3, 3)
 for i in range(10):
