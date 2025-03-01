@@ -186,14 +186,15 @@ class NetworkModel(mesa.Model):
             self.G = nx.powerlaw_cluster_graph(n=self.num_nodes, m=m_value, p=p_value/10)
         self.grid = mesa.space.NetworkGrid(self.G)
 
+        # Create agents
+        def create_agents(self):
+            for i, node in enumerate(self.G.nodes()):
+                agent = NetworkAgent(model=self)
+                self.grid.place_agent(a, node)
+
         self.new_cases = 0
         self.new_recoveries = 0
-
-        # Create agents
-        for i, node in enumerate(self.G.nodes()):
-            a = NetworkAgent(model=self)
-            # Add the agent to a node
-            self.grid.place_agent(a, node)
+        self.create_agents()
 
         self.datacollector = mesa.DataCollector(model_reporters={
          "Total Infections": compute_total_infections,
