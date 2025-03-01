@@ -12,6 +12,9 @@ pandas = "*"
 scipy = "*"
 networkx = "*"
 matplotlib = "*"
+solara = "*"
+solara-server = "*"
+solara-ui = "*"
 
 [dev-packages]
 
