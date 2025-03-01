@@ -67,9 +67,9 @@ class NetworkAgent(mesa.Agent):
         self.chance_of_infection = self.model.chance_of_infection
         self.vaccinated = 0
 
-        if self.unique_id < 2:
+        if random.random() < 0.2:
             self.wealth = 1
-        if self.unique_id < self.model.vaccination_rate * self.model.num_nodes:
+        if random.random()*100 < self.model.vaccination_rate * self.model.num_nodes:
             self.vaccinated = self.model.vaccination_efficacy
         if random.random() < self.model.age_risk_proportion/100:
             self.increase_age_risk = 1.2
