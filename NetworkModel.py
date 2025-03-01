@@ -47,10 +47,17 @@ def compute_prevalence_alcohol(model):
     return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_alcohol_use != 1)/sum(1 for agent in model.agents if agent.increase_alcohol_use != 1)
 
 
-class NetworkAgent(mesa.Agent):
+class MyAgent:
+    def __init__(self, model, *args, **kwargs) -> None:
+        print('init myagent')
+
+class NetworkAgent(MyAgent):
     def __init__(self, model):
+        
         # pass the parameters to the parent class
         super().__init__(model)
+        print('init done!')
+
         # create the agent's variable and set the initial values
         self.wealth = 0
         self.steps = 0
