@@ -9,6 +9,7 @@ mesa = "*"
 seaborn = "*"
 numpy = "*"
 pandas = "*"
+scipy = "*"
 
 [dev-packages]
 
