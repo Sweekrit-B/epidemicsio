@@ -50,9 +50,8 @@ def compute_prevalence_alcohol(model):
 class NetworkAgent(mesa.Agent):
     def __init__(self, model):
         # pass the parameters to the parent class
-        # super().__init__(model)
+        super().__init__(model)
         # create the agent's variable and set the initial values
-        self.model = model
         self.wealth = 0
         self.steps = 0
         self.recovered = 0
@@ -67,9 +66,9 @@ class NetworkAgent(mesa.Agent):
         self.chance_of_infection = self.model.chance_of_infection
         self.vaccinated = 0
 
-        if random.random() < 0.2:
+        if self.unique_id < 2:
             self.wealth = 1
-        if random.random()*100 < self.model.vaccination_rate * self.model.num_nodes:
+        if self.unique_id < self.model.vaccination_rate * self.model.num_nodes:
             self.vaccinated = self.model.vaccination_efficacy
         if random.random() < self.model.age_risk_proportion/100:
             self.increase_age_risk = 1.2
