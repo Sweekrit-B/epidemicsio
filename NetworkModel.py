@@ -56,7 +56,7 @@ class MyAgent:
 class NetworkAgent(mesa.Agent):
     def __init__(self, model):
 
-        raise Exception('Method signature:', inspect.signature(super().__init__))
+        raise Exception('Mesa version:', mesa.__version__)
         
         # pass the parameters to the parent class
         super().__init__(model)
