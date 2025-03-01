@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import mesa.visualization
 import pandas as pd
 import time
+import matplotlib
+
+matplotlib.use('WebAgg')
 
 st.title("Epidemics.io - Network Simulation")
 
