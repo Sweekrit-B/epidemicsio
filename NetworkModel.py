@@ -51,12 +51,13 @@ class MyAgent:
     def __init__(self, model, *args, **kwargs) -> None:
         print('init myagent')
 
-class NetworkAgent(MyAgent):
+class NetworkAgent(mesa.Agent):
     def __init__(self, model):
+
+        raise Exception('Model is:', type(model))
         
         # pass the parameters to the parent class
         super().__init__(model)
-        print('init done!')
 
         # create the agent's variable and set the initial values
         self.wealth = 0
