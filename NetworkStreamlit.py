@@ -6,8 +6,6 @@ import mesa.visualization
 import pandas as pd
 import time
 
-plt.switch_backend('Agg')
-
 st.title("Epidemics.io - Network Simulation")
 
 with st.sidebar:
