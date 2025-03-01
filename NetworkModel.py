@@ -9,6 +9,8 @@ import networkx as nx
 import datetime
 import os
 
+import inspect
+
 matplotlib.use('Agg')
 
 #https://pubmed.ncbi.nlm.nih.gov/11130187/
@@ -53,6 +55,8 @@ class MyAgent:
 
 class NetworkAgent(mesa.Agent):
     def __init__(self, model):
+
+        raise Exception('Method signature:', inspect.signature(super().__init__))
         
         # pass the parameters to the parent class
         super().__init__(model)
