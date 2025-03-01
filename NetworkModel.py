@@ -53,8 +53,6 @@ class MyAgent:
 
 class NetworkAgent(mesa.Agent):
     def __init__(self, model):
-
-        raise Exception('Model is:', type(model))
         
         # pass the parameters to the parent class
         super().__init__(model)
