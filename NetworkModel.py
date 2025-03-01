@@ -52,7 +52,7 @@ class NetworkAgent(mesa.Agent):
         if model is None:
             raise ValueError("Model is None")
         # pass the parameters to the parent class
-        super().__init__(model)
+        # super().__init__(model)
         # create the agent's variable and set the initial values
         self.wealth = 0
         self.steps = 0
