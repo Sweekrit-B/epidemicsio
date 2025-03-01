@@ -48,9 +48,7 @@ def compute_prevalence_alcohol(model):
 
 
 class NetworkAgent(mesa.Agent):
-    def __init__(self, model=None):
-        if model is None:
-            raise ValueError("Model is None")
+    def __init__(self, model):
         # pass the parameters to the parent class
         # super().__init__(model)
         # create the agent's variable and set the initial values
