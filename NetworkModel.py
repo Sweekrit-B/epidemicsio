@@ -52,6 +52,7 @@ class NetworkAgent(mesa.Agent):
         # pass the parameters to the parent class
         # super().__init__(model)
         # create the agent's variable and set the initial values
+        self.model = model
         self.wealth = 0
         self.steps = 0
         self.recovered = 0
