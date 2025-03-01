@@ -186,12 +186,6 @@ class NetworkModel(mesa.Model):
             self.G = nx.powerlaw_cluster_graph(n=self.num_nodes, m=m_value, p=p_value/10)
         self.grid = mesa.space.NetworkGrid(self.G)
 
-        # Create agents
-        def create_agents(self):
-            for i, node in enumerate(self.G.nodes()):
-                agent = NetworkAgent(model=self)
-                self.grid.place_agent(a, node)
-
         self.new_cases = 0
         self.new_recoveries = 0
         self.create_agents()
@@ -230,6 +224,11 @@ class NetworkModel(mesa.Model):
         self.prevalence_physical_activity_risk = 0
         self.prevalence_alcohol_risk = 0
         self.prevalence_lifestyle_risk = 0
+
+    def create_agents(self):
+            for i, node in enumerate(self.G.nodes()):
+                agent = NetworkAgent(model=self)
+                self.grid.place_agent(a, node)
 
     def step(self):
         self.datacollector.collect(self)
