@@ -50,6 +50,7 @@ with st.expander("Citations"):
 run = st.button("Run Simulation")
 
 model = NetworkModel(num_agents, infection_chance, graph_type_choice, m_value_slider, p_value_slider, num_recoveries_slider, num_steps_recoveries_slider,  age_risk, genetic_risk, tobacco_use, unhealthy_diet, insufficient_physical_activity, harmful_alcohol_use, income_multiplier, vaccination_rate, vaccination_efficacy)
+model.create_agents()
 
 def get_colors():
     node_colors = []

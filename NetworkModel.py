@@ -188,7 +188,6 @@ class NetworkModel(mesa.Model):
 
         self.new_cases = 0
         self.new_recoveries = 0
-        self.create_agents()
 
         self.datacollector = mesa.DataCollector(model_reporters={
          "Total Infections": compute_total_infections,
@@ -226,9 +225,10 @@ class NetworkModel(mesa.Model):
         self.prevalence_lifestyle_risk = 0
 
     def create_agents(self):
-            for i, node in enumerate(self.G.nodes()):
-                agent = NetworkAgent(model=self)
-                self.grid.place_agent(a, node)
+        for i, node in enumerate(self.G.nodes()):
+            a = NetworkAgent(self)
+            # Add the agent to a node
+            self.grid.place_agent(a, node)
 
     def step(self):
         self.datacollector.collect(self)
