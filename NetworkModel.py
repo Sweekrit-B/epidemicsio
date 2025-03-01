@@ -48,7 +48,9 @@ def compute_prevalence_alcohol(model):
 
 
 class NetworkAgent(mesa.Agent):
-    def __init__(self, model):
+    def __init__(self, model=None):
+        if model is None:
+            raise ValueError("Model is None")
         # pass the parameters to the parent class
         super().__init__(model)
         # create the agent's variable and set the initial values
@@ -226,7 +228,7 @@ class NetworkModel(mesa.Model):
 
     def create_agents(self):
         for i, node in enumerate(self.G.nodes()):
-            a = NetworkAgent()
+            a = NetworkAgent(model=self)
             # Add the agent to a node
             self.grid.place_agent(a, node)
 
