@@ -1,5 +1,6 @@
 from NetworkModel import NetworkModel
 import mesa.visualization
+from mesa.visualization import StaticText
 
 def network_portrayal(G):
     portrayal = dict()

@@ -17,86 +17,71 @@ matplotlib.use('TkAgg')
 output_path = "C:/Users/sweek/Documents/buildspace/output_data"
 
 def compute_total_infections(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0)
 
 def compute_prevalence(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)/model.num_nodes
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0)/model.num_nodes
 def compute_incidence(model):
     return model.new_cases / model.num_nodes
 def compute_recovered(model):
-    return sum(1 for agent in model.schedule.agents if agent.recovered == 1)
+    return sum(1 for agent in model.agents if agent.recovered == 1)
 def compute_infected(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0)
 def compute_susceptible(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 0 and agent.num_recoveries < model.num_recoveries_for_immune)
+    return sum(1 for agent in model.agents if agent.wealth == 0 and agent.num_recoveries < model.num_recoveries_for_immune)
 def compute_vaccinated(model):
     return model.vaccinations
-
 def compute_prevalence_age(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_age_risk != 1)/sum(1 for agent in model.schedule.agents if agent.increase_age_risk != 1)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_age_risk != 1)/sum(1 for agent in model.agents if agent.increase_age_risk != 1)
 def compute_prevalence_genetic(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_genetic_risk != 1)/sum(1 for agent in model.schedule.agents if agent.increase_genetic_risk != 1)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_genetic_risk != 1)/sum(1 for agent in model.agents if agent.increase_genetic_risk != 1)
 def compute_prevalence_lifestyle(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_lifestyle_risk != 1)/sum(1 for agent in model.schedule.agents if agent.increase_lifestyle_risk != 1)
-
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_lifestyle_risk != 1)/sum(1 for agent in model.agents if agent.increase_lifestyle_risk != 1)
 def compute_prevalence_tobacco(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_tobacco_use != 1)/sum(1 for agent in model.schedule.agents if agent.increase_tobacco_use != 1)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_tobacco_use != 1)/sum(1 for agent in model.agents if agent.increase_tobacco_use != 1)
 def compute_prevalence_diet(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_unhealthy_diet != 1)/sum(1 for agent in model.schedule.agents if agent.increase_unhealthy_diet != 1)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_unhealthy_diet != 1)/sum(1 for agent in model.agents if agent.increase_unhealthy_diet != 1)
 def compute_prevalence_activity(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_physical_activity != 1)/sum(1 for agent in model.schedule.agents if agent.increase_physical_activity != 1)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_physical_activity != 1)/sum(1 for agent in model.agents if agent.increase_physical_activity != 1)
 def compute_prevalence_alcohol(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_alcohol_use != 1)/sum(1 for agent in model.schedule.agents if agent.increase_alcohol_use != 1)
+    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_alcohol_use != 1)/sum(1 for agent in model.agents if agent.increase_alcohol_use != 1)
 
 
 class NetworkAgent(mesa.Agent):
-    def __init__(self, unique_id, model):
+    def __init__(self, model):
         # pass the parameters to the parent class
-        super().__init__(unique_id, model)
+        super().__init__(model)
         # create the agent's variable and set the initial values
         self.wealth = 0
         self.steps = 0
         self.recovered = 0
         self.num_recoveries = 0
-
         self.increase_age_risk = 1
         self.increase_genetic_risk = 1
-        
         self.increase_tobacco_use = 1
         self.increase_unhealthy_diet = 1
         self.increase_physical_activity = 1
         self.increase_alcohol_use = 1
-
         self.increase_lifestyle_risk = 1
-
         self.chance_of_infection = self.model.chance_of_infection
-
         self.vaccinated = 0
 
-        id_list = []
-        id_list.append(unique_id)
-        for x in id_list:
-            if x < 1:
-                self.wealth = 1
-            if x < self.model.vaccination_rate * self.model.num_nodes:
-                self.vaccinated = self.model.vaccination_efficacy
-            if random.random() < self.model.age_risk_proportion/100:
-                self.increase_age_risk = 1.2
-                
-                #This, strictly speaking, defines a person's INNATE immunity, which decreases with age. Aging effects a person's ability to produce plasmacytoid dendritic cells (pDCs), which are key cellular responders of viral infection, producing type I interferon
-
-                #aging impairs pDCs ability to produce type I IFNs
-
-            if random.random() < self.model.genetic_risk_proportion/100:
-                self.increase_genetic_risk = 1.2
-            if random.random() < self.model.tobacco_risk_proportion/100:
-                self.increase_tobacco_use = 1.2
-            if random.random() < self.model.unhealthy_diet_proportion/100:
-                self.increase_unhealthy_diet = 1.2
-            if random.random() < self.model.physical_activity_proportion/100:
-                self.increase_physical_activity = 1.2
-            if random.random() < self.model.alcohol_use_proportion/100:
-                self.increase_alcohol_use = 1.2
+        if self.unique_id < 2:
+            self.wealth = 1
+        if self.unique_id < self.model.vaccination_rate * self.model.num_nodes:
+            self.vaccinated = self.model.vaccination_efficacy
+        if random.random() < self.model.age_risk_proportion/100:
+            self.increase_age_risk = 1.2
+        if random.random() < self.model.genetic_risk_proportion/100:
+            self.increase_genetic_risk = 1.2
+        if random.random() < self.model.tobacco_risk_proportion/100:
+            self.increase_tobacco_use = 1.2
+        if random.random() < self.model.unhealthy_diet_proportion/100:
+            self.increase_unhealthy_diet = 1.2
+        if random.random() < self.model.physical_activity_proportion/100:
+            self.increase_physical_activity = 1.2
+        if random.random() < self.model.alcohol_use_proportion/100:
+            self.increase_alcohol_use = 1.2
             self.increase_lifestyle_risk = self.increase_tobacco_use * self.increase_unhealthy_diet * self.increase_physical_activity * self.increase_alcohol_use * self.model.income_multiplier
 
     def move(self):
@@ -105,7 +90,7 @@ class NetworkAgent(mesa.Agent):
             new_position = self.random.choice(possible_steps)
             self.model.grid.move_agent(self, new_position)
 
-    def give_money(self):
+    def give_disease(self):
         neighbor_agents = self.model.grid.get_neighbors(self.pos, include_center=False)
         susceptible_neighbors = [agent for agent in neighbor_agents if agent.wealth == 0]
         if susceptible_neighbors:
@@ -121,7 +106,7 @@ class NetworkAgent(mesa.Agent):
     def step(self):
         self.move()
         if self.wealth == 1:
-            self.give_money()
+            self.give_disease()
             self.steps += 1
         elif self.wealth == 0:
             self.steps = 0
@@ -130,11 +115,6 @@ class NetworkAgent(mesa.Agent):
             self.wealth = 0
             self.recovered = 1
             self.num_recoveries += 1
-
-            #This defines a person's ADAPTIVE immunity, which decreases with age. Aging effects a person's T cells, which has a reduced ability to form functional immunological synapses compared to younger T cells.
-
-            #As a person RECOVERS from disease, the chance of getting infected by disease gets reduced by 10% for those who have age-risk, but by 25% for those who don't have that risk.
- 
             if self.increase_age_risk == 1.2:
                 self.chance_of_infection *= 0.75
             elif self.increase_age_risk == 1:
@@ -162,10 +142,10 @@ class NetworkModel(mesa.Model):
         self.num_steps = num_steps
 
         self.results_df = pd.DataFrame(columns=[
-            "Step", "Total Infections", "Prevalence", "Incidence", "Susceptible", "Infected", "Recovered", 
+            "Total Infections", "Prevalence", "Incidence", "Susceptible", "Infected", "Recovered", 
             "Vaccinations", "Prevalence - Age Risk", "Prevalence - Genetic Risk", 
             "Prevalence - Tobacco", "Prevalence - Diet", "Prevalence - Physical Activity", 
-            "Prevalence - Alcohol Use", "Prevalence - Lifestyle Risk", "Type"
+            "Prevalence - Alcohol Use", "Prevalence - Lifestyle Risk"
         ])
 
         #Defines the number of recoveries that are required for a person to become IMMUNE from a disease. This is to reflect the evolution of diseases, and different strains that may arise.
@@ -191,7 +171,6 @@ class NetworkModel(mesa.Model):
         
         self.vaccinations = 0
 
-        self.schedule = mesa.time.RandomActivation(self)
         #Here, need to generate a random graph, and then make a grid on it
         if graph_type == 'Barabasi Albert':
             #In a Barabasi Albert graph, the m value is the number of new edges per new node. Therefore, when a new node is added to the network, it establishes m edges to existing nodes. Nodes with more connections are more likely to receive new edges. A larger m value will increase the connectivity of new nodes, leading to a network with a high number of edges and more pronounced hubs.
@@ -212,9 +191,7 @@ class NetworkModel(mesa.Model):
 
         # Create agents
         for i, node in enumerate(self.G.nodes()):
-            a = NetworkAgent(i, self)
-            # Add the agent to the scheduler
-            self.schedule.add(a)
+            a = NetworkAgent(model=self)
             # Add the agent to a node
             self.grid.place_agent(a, node)
 
@@ -235,58 +212,73 @@ class NetworkModel(mesa.Model):
          "Prevalence - Lifestyle Risk": compute_prevalence_lifestyle},
         agent_reporters={"Wealth": "wealth"})
 
+        self.total_infections = 1
+        self.vaccinations = 0
+        
+        self.prevalence = 0
+        self.incidence = 0
+
+        self.susceptible = 0
+        self.infected = 1
+        self.recovered = 0
+
+        self.prevalence_age_risk = 0
+        self.prevalence_genetic_risk = 0
+        self.prevalence_tobacco_risk = 0
+        self.prevalence_diet_risk = 0
+        self.prevalence_physical_activity_risk = 0
+        self.prevalence_alcohol_risk = 0
+        self.prevalence_lifestyle_risk = 0
+
     def step(self):
         self.datacollector.collect(self)
 
-        total_infections = compute_total_infections(self)
-        prevalence = compute_prevalence(self)
-        incidence = compute_incidence(self)
-        susceptible = compute_susceptible(self)
-        infected = compute_infected(self)
-        recovered = compute_recovered(self)
-        vaccinations = compute_vaccinated(self)
-        prevalence_age_risk = compute_prevalence_age(self)
-        prevalence_genetic_risk = compute_prevalence_genetic(self)
-        prevalence_tobacco_risk = compute_prevalence_tobacco(self)
-        prevalence_diet_risk = compute_prevalence_diet(self)
-        prevalence_physical_activity_risk = compute_prevalence_activity(self)
-        prevalence_alcohol_risk = compute_prevalence_alcohol(self)
-        prevalence_lifestyle_risk = compute_prevalence_lifestyle(self)
+        self.total_infections = compute_total_infections(self)
+        self.prevalence = compute_prevalence(self)
+        self.incidence = compute_incidence(self)
+        self.susceptible = compute_susceptible(self)
+        self.infected = compute_infected(self)
+        self.recovered = compute_recovered(self)
+        self.vaccinations = compute_vaccinated(self)
+        self.prevalence_age_risk = compute_prevalence_age(self)
+        self.prevalence_genetic_risk = compute_prevalence_genetic(self)
+        self.prevalence_tobacco_risk = compute_prevalence_tobacco(self)
+        self.prevalence_diet_risk = compute_prevalence_diet(self)
+        self.prevalence_physical_activity_risk = compute_prevalence_activity(self)
+        self.prevalence_alcohol_risk = compute_prevalence_alcohol(self)
+        self.prevalence_lifestyle_risk = compute_prevalence_lifestyle(self)
 
         new_row = {
-            "Step": self.schedule.steps,
-            "Total Infections": total_infections,
-            "Prevalence": prevalence,
-            "Incidence": incidence,
-            "Susceptible": susceptible,
-            "Infected": infected,
-            "Recovered": recovered,
-            "Vaccinations": vaccinations,
-            "Prevalence - Age Risk": prevalence_age_risk,
-            "Prevalence - Genetic Risk": prevalence_genetic_risk,
-            "Prevalence - Tobacco": prevalence_tobacco_risk,
-            "Prevalence - Diet": prevalence_diet_risk,
-            "Prevalence - Physical Activity": prevalence_physical_activity_risk,
-            "Prevalence - Alcohol Use": prevalence_alcohol_risk,
-            "Prevalence - Lifestyle Risk": prevalence_lifestyle_risk,
-            "Type": "propogated"
+            "Total Infections": self.total_infections,
+            "Prevalence": self.prevalence,
+            "Incidence": self.incidence,
+            "Susceptible": self.susceptible,
+            "Infected": self.infected,
+            "Recovered": self.recovered,
+            "Vaccinations": self.vaccinations,
+            "Prevalence - Age Risk": self.prevalence_age_risk,
+            "Prevalence - Genetic Risk": self.prevalence_genetic_risk,
+            "Prevalence - Tobacco": self.prevalence_tobacco_risk,
+            "Prevalence - Diet": self.prevalence_diet_risk,
+            "Prevalence - Physical Activity": self.prevalence_physical_activity_risk,
+            "Prevalence - Alcohol Use": self.prevalence_alcohol_risk,
+            "Prevalence - Lifestyle Risk": self.prevalence_lifestyle_risk,
         }
     
         self.results_df = self.results_df._append(new_row, ignore_index=True)
-
         self.new_cases = 0
-        self.schedule.step()
+        self.agents.do("step")
 
-        if self.schedule.steps != 1 and prevalence == 0.0:
-            print("All agents have recovered. Simulation finished.")
-            self.running = False
-            ct = str(datetime.datetime.now())
-            ct = ct.replace(':', '-')
-            ct = ct.replace(' ', '--')
-            filename = f'{ct}_network_model_run.csv'
-            filepath = os.path.join(output_path, filename)
-            self.results_df.to_csv(filepath, index=False)
-            print("Saved!")
+        # if self.agents.do("step") != 1 and prevalence == 0.0:
+        #     print("All agents have recovered. Simulation finished.")
+        #     self.running = False
+            # ct = str(datetime.datetime.now())
+            # ct = ct.replace(':', '-')
+            # ct = ct.replace(' ', '--')
+            # filename = f'{ct}_network_model_run.csv'
+            # filepath = os.path.join(output_path, filename)
+            # self.results_df.to_csv(filepath, index=False)
+            # print("Saved!")
 
 """model = NetworkModel(10, 3, 3)
 for i in range(10):
