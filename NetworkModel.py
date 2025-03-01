@@ -9,7 +9,7 @@ import networkx as nx
 import datetime
 import os
 
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 
 #https://pubmed.ncbi.nlm.nih.gov/11130187/
 #https://www.sciencedirect.com/science/article/pii/S128645791000211X?via%3Dihub
