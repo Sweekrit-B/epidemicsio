@@ -226,7 +226,7 @@ class NetworkModel(mesa.Model):
 
     def create_agents(self):
         for i, node in enumerate(self.G.nodes()):
-            a = NetworkAgent(self)
+            a = NetworkAgent(model=self)
             # Add the agent to a node
             self.grid.place_agent(a, node)
 
