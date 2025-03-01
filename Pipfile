@@ -10,6 +10,8 @@ seaborn = "*"
 numpy = "*"
 pandas = "*"
 scipy = "*"
+networkx = "*"
+matplotlib = "*"
 
 [dev-packages]
 
