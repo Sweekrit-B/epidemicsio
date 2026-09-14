@@ -14,7 +14,7 @@ from MoneyModel import compute_recovered as money_recovered
 from MoneyModel import compute_susceptible as money_susceptible
 from NetworkModel import NetworkModel
 
-matplotlib.use('WebAgg')
+matplotlib.use('Agg')
 
 st.title("Epidemics.io")
 

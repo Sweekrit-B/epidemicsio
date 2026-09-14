@@ -24,20 +24,31 @@ def compute_susceptible(model):
     return sum(1 for agent in model.agents if agent.wealth == 0 and agent.num_recoveries < model.num_recoveries_for_immune)
 def compute_vaccinated(model):
     return model.vaccinations
+def _prevalence_among(model, at_risk_attr):
+    at_risk = sum(1 for agent in model.agents if getattr(agent, at_risk_attr) != 1)
+    if at_risk == 0:
+        return 0.0
+    infected_at_risk = sum(
+        1
+        for agent in model.agents
+        if agent.wealth == 1 and agent.recovered == 0 and getattr(agent, at_risk_attr) != 1
+    )
+    return infected_at_risk / at_risk
+
 def compute_prevalence_age(model):
-    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_age_risk != 1)/sum(1 for agent in model.agents if agent.increase_age_risk != 1)
+    return _prevalence_among(model, "increase_age_risk")
 def compute_prevalence_genetic(model):
-    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_genetic_risk != 1)/sum(1 for agent in model.agents if agent.increase_genetic_risk != 1)
+    return _prevalence_among(model, "increase_genetic_risk")
 def compute_prevalence_lifestyle(model):
-    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_lifestyle_risk != 1)/sum(1 for agent in model.agents if agent.increase_lifestyle_risk != 1)
+    return _prevalence_among(model, "increase_lifestyle_risk")
 def compute_prevalence_tobacco(model):
-    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_tobacco_use != 1)/sum(1 for agent in model.agents if agent.increase_tobacco_use != 1)
+    return _prevalence_among(model, "increase_tobacco_use")
 def compute_prevalence_diet(model):
-    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_unhealthy_diet != 1)/sum(1 for agent in model.agents if agent.increase_unhealthy_diet != 1)
+    return _prevalence_among(model, "increase_unhealthy_diet")
 def compute_prevalence_activity(model):
-    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_physical_activity != 1)/sum(1 for agent in model.agents if agent.increase_physical_activity != 1)
+    return _prevalence_among(model, "increase_physical_activity")
 def compute_prevalence_alcohol(model):
-    return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0 and agent.increase_alcohol_use != 1)/sum(1 for agent in model.agents if agent.increase_alcohol_use != 1)
+    return _prevalence_among(model, "increase_alcohol_use")
 
 
 class NetworkAgent(mesa.Agent):
