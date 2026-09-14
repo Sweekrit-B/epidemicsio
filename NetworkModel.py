@@ -1,22 +1,13 @@
 import mesa
-import seaborn as sns
-import numpy as np
 import pandas as pd
 import random
-import matplotlib.pyplot as plt
 import matplotlib
 import networkx as nx
-import datetime
-import os
-
-import inspect
 
 matplotlib.use('Agg')
 
 #https://pubmed.ncbi.nlm.nih.gov/11130187/
 #https://www.sciencedirect.com/science/article/pii/S128645791000211X?via%3Dihub
-
-output_path = "C:/Users/sweek/Documents/buildspace/output_data"
 
 def compute_total_infections(model):
     return sum(1 for agent in model.agents if agent.wealth == 1 and agent.recovered == 0)
@@ -274,18 +265,3 @@ class NetworkModel(mesa.Model):
         )
         self.new_cases = 0
         self.agents.do("step")
-
-        # if self.agents.do("step") != 1 and prevalence == 0.0:
-        #     print("All agents have recovered. Simulation finished.")
-        #     self.running = False
-            # ct = str(datetime.datetime.now())
-            # ct = ct.replace(':', '-')
-            # ct = ct.replace(' ', '--')
-            # filename = f'{ct}_network_model_run.csv'
-            # filepath = os.path.join(output_path, filename)
-            # self.results_df.to_csv(filepath, index=False)
-            # print("Saved!")
-
-"""model = NetworkModel(10, 3, 3)
-for i in range(10):
-    model.step()"""

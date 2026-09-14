@@ -1,3 +1,4 @@
+import solara
 from MoneyModel import MoneyModel
 from mesa.visualization import SolaraViz, SpaceRenderer, Slider, make_plot_component
 from mesa.visualization.components import AgentPortrayalStyle
@@ -6,7 +7,24 @@ from mesa.visualization.components import AgentPortrayalStyle
 def agent_portrayal(agent):
     if agent.wealth > 0:
         return AgentPortrayalStyle(color="red", size=50)
+    if agent.recovered:
+        return AgentPortrayalStyle(color="green", size=30)
     return AgentPortrayalStyle(color="grey", size=30)
+
+
+@solara.component
+def Legend(model):
+    solara.Markdown(
+        "**Legend:** 🔴 Infected &nbsp;&nbsp; "
+        "🟢 Recovered &nbsp;&nbsp; "
+        "⚪ Susceptible"
+    )
+
+
+@solara.component
+def SimulationStatus(model):
+    if not model.running:
+        solara.Markdown("**Simulation finished** — all agents have recovered.")
 
 
 model_params = {
@@ -48,6 +66,8 @@ page = SolaraViz(
     model,
     renderer=renderer,
     components=[
+        Legend,
+        SimulationStatus,
         make_plot_component({"Prevalence": "black"}),
         make_plot_component({"Incidence": "blue"}),
         make_plot_component(

@@ -2,3 +2,5 @@
 **/submission/
 **/output_data/
 .gstack/
+__pycache__/
+*.pyc

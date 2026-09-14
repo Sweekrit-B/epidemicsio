@@ -1,3 +1,4 @@
+import solara
 from NetworkModel import NetworkModel
 from mesa.visualization import SolaraViz, SpaceRenderer, Slider, make_plot_component
 from mesa.visualization.components import AgentPortrayalStyle
@@ -11,6 +12,15 @@ def agent_portrayal(agent):
     else:
         color = "blue"
     return AgentPortrayalStyle(color=color, size=30)
+
+
+@solara.component
+def Legend(model):
+    solara.Markdown(
+        "**Legend:** 🔴 Infected &nbsp;&nbsp; "
+        "🟢 Recovered &nbsp;&nbsp; "
+        "🔵 Susceptible"
+    )
 
 
 model_params = {
@@ -29,8 +39,14 @@ model_params = {
             "Power Law Cluster",
         ],
     },
-    "p_value": Slider("P Value (0 < x < 10)", 4, 0, 10, 1),
-    "m_value": Slider("M Value (0 < x < number of nodes)", 3, 0, 10, 1),
+    "p_value": Slider(
+        "P Value — used by Watts Strogatz / Erdos Renyi / Power Law Cluster only (0 < x < 10)",
+        4, 0, 10, 1,
+    ),
+    "m_value": Slider(
+        "M Value — used by Barabasi Albert / Power Law Cluster only (0 < x < number of nodes)",
+        3, 0, 10, 1,
+    ),
     "num_recoveries_for_immune": Slider("Number of Recoveries", 3, 0, 10, 1),
     "num_steps": Slider("Number of Steps till Recovery", 10, 0, 10, 1),
     "age_risk_proportion": Slider("At-Risk due to Age (0 < x < 100)", 30, 0, 100, 1),
@@ -85,6 +101,7 @@ page = SolaraViz(
     model,
     renderer=renderer,
     components=[
+        Legend,
         make_plot_component({"Total Infections": "red"}),
         make_plot_component({"Prevalence": "black"}),
         make_plot_component({"Incidence": "blue"}),

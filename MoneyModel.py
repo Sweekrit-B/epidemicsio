@@ -1,9 +1,6 @@
 import mesa
-import seaborn as sns
 import numpy as np
-import pandas as pd
 import random
-import matplotlib.pyplot as plt
 import matplotlib
 
 matplotlib.use('Agg')
@@ -30,11 +27,7 @@ def compute_infected(model):
     return i
 
 def compute_susceptible(model):
-    agent_wealths = [agent.wealth for agent in model.agents]
-    agent_recovered = [agent.recovered for agent in model.agents]
-    i = sum(agent_wealths)
-    r = sum(agent_recovered)
-    return model.num_agents-i-r
+    return sum(1 for agent in model.agents if agent.wealth == 0 and agent.recovered == 0)
 
 class MoneyAgent(mesa.Agent):
     def __init__(self, model):
@@ -110,9 +103,7 @@ class MoneyAgent(mesa.Agent):
         elif self.wealth < 1:
             self.steps = 0
         if self.steps >= self.model.steps_to_death:
-            print(f"Agent {self.unique_id} at risk of death")
             if random.random() < self.death_risk/100:
-                print(f"Agent {self.unique_id} died.")
                 self.model.grid.remove_agent(self)
                 self.remove()
                 self.model.deaths += 1
@@ -205,8 +196,3 @@ class MoneyModel(mesa.Model):
         if self.steps != 1 and prevalence == 0.0:
             print("All agents have recovered. Simulation finished.")
             self.running = False
-
-'''model = MoneyModel(10, 2, 4, 4, 20, 20)
-for i in range(100):
-    model.step()
-    model_state = model.datacollector.get_model_vars_dataframe()'''
