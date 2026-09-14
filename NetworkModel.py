@@ -269,7 +269,9 @@ class NetworkModel(mesa.Model):
             "Prevalence - Lifestyle Risk": self.prevalence_lifestyle_risk,
         }
     
-        self.results_df = self.results_df._append(new_row, ignore_index=True)
+        self.results_df = pd.concat(
+            [self.results_df, pd.DataFrame([new_row])], ignore_index=True
+        )
         self.new_cases = 0
         self.agents.do("step")
 

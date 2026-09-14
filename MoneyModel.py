@@ -6,23 +6,13 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib
 
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 
-def compute_prevalence(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)/model.num_nodes
-def compute_incidence(model):
-    return model.new_cases / model.num_nodes
-def compute_recovered(model):
-    return sum(1 for agent in model.schedule.agents if agent.recovered == 1)
-def compute_infected(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 1 and agent.recovered == 0)
-def compute_susceptible(model):
-    return sum(1 for agent in model.schedule.agents if agent.wealth == 0 and agent.recovered == 0)
 def compute_deaths(model):
     return model.deaths
 
 def compute_prevalence(model):
-    agent_wealths = [agent.wealth for agent in model.schedule.agents]
+    agent_wealths = [agent.wealth for agent in model.agents]
     c = sum(agent_wealths)
     return c/model.num_agents
 
@@ -30,26 +20,26 @@ def compute_incidence(model):
     return model.new_cases / model.num_agents
 
 def compute_recovered(model):
-    agent_recovered = [agent.recovered for agent in model.schedule.agents]
+    agent_recovered = [agent.recovered for agent in model.agents]
     r = sum(agent_recovered)
     return r
 
 def compute_infected(model):
-    agent_wealths = [agent.wealth for agent in model.schedule.agents]
+    agent_wealths = [agent.wealth for agent in model.agents]
     i = sum(agent_wealths)
     return i
 
 def compute_susceptible(model):
-    agent_wealths = [agent.wealth for agent in model.schedule.agents]
-    agent_recovered = [agent.recovered for agent in model.schedule.agents]
+    agent_wealths = [agent.wealth for agent in model.agents]
+    agent_recovered = [agent.recovered for agent in model.agents]
     i = sum(agent_wealths)
     r = sum(agent_recovered)
     return model.num_agents-i-r
 
 class MoneyAgent(mesa.Agent):
-    def __init__(self, unique_id, model):
+    def __init__(self, model):
         # pass the parameters to the parent class
-        super().__init__(unique_id, model)
+        super().__init__(model)
         # create the agent's variable and set the initial values
         self.x = None
         self.y = None
@@ -67,7 +57,7 @@ class MoneyAgent(mesa.Agent):
         self.death_risk = self.model.death_risk * self.increase_age_risk_death * self.increase_genetic_risk * self.increase_lifestyle_risk
 
         id_list = []
-        id_list.append(unique_id)
+        id_list.append(self.unique_id)
         for x in id_list:
             if random.random() < self.model.age_risk/100:
                 self.increase_age_risk = 1.2
@@ -123,8 +113,8 @@ class MoneyAgent(mesa.Agent):
             print(f"Agent {self.unique_id} at risk of death")
             if random.random() < self.death_risk/100:
                 print(f"Agent {self.unique_id} died.")
-                self.model.schedule.remove(self)
                 self.model.grid.remove_agent(self)
+                self.remove()
                 self.model.deaths += 1
         if self.in_recovery_zone() and self.wealth == 1:
             self.wealth = 0
@@ -150,7 +140,6 @@ class MoneyModel(mesa.Model):
         self.death_risk = death_risk
         self.steps_to_death = steps_to_death
 
-        self.schedule = mesa.time.RandomActivation(self)
         self.grid = mesa.space.MultiGrid(width, height, True)
         self.recovery_layer = mesa.space.PropertyLayer(
             name = "recovery_zone",
@@ -182,9 +171,7 @@ class MoneyModel(mesa.Model):
 
         # Create agents
         for i in range(self.num_agents):
-            a = MoneyAgent(i, self)
-            # Add the agent to the scheduler
-            self.schedule.add(a)
+            a = MoneyAgent(self)
 
             # Add the agent to a random grid cell
             x = self.random.randrange(self.grid.width)
@@ -209,13 +196,13 @@ class MoneyModel(mesa.Model):
         susceptible = compute_susceptible(self)
         infected = compute_infected(self)
         recovered = compute_recovered(self)
-        #print(f"Step {self.schedule.steps}: Prevalence = {prevalence}, Incidence = {incidence}")
+        #print(f"Step {self.steps}: Prevalence = {prevalence}, Incidence = {incidence}")
         #print(f"Susceptible = {susceptible}, Infected = {infected}, Recovered = {recovered}")
 
         self.new_cases = 0
-        self.schedule.step()
+        self.agents.shuffle_do("step")
 
-        if self.schedule.steps != 1 and prevalence == 0.0:
+        if self.steps != 1 and prevalence == 0.0:
             print("All agents have recovered. Simulation finished.")
             self.running = False
 
